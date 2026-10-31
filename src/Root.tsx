@@ -12,13 +12,13 @@ export const Root: React.FC = () => {
       width={1080}
       height={1920}
       defaultProps={{
-        hookA: 'Gak perlu dandan *2 jam*',
-        hookB: 'biar orang di sekitar nyaman dekat kamu',
-        isiA: 'Cukup dandan bentar',
-        isiB: 'Semprot ini',
-        isiC: 'Sat-set, beres!',
-        ctaA: 'Kepoin *live-nya*',
-        ctaB: 'kalau mau tau rahasianya',
+        hookA: 'Jualan aja',
+        hookB: 'Pesanan banyak, waktu makin terbatas.',
+        isiA: 'Masih harus',
+        isiB: 'Ide, desain, sampai materi promosi.',
+        isiC: 'manfaatkan kekuatan AI!',
+        ctaA: 'Bisnis jalan.',
+        ctaB: 'KENALAN DENGAN QUORVANTE',
         showCaptions: true,
       }}
     />
