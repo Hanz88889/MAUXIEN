@@ -1,3 +1,9 @@
+import fs from 'fs';
+if (fs.existsSync(outputPath)) {
+  console.log('Timeline JSON sudah ada, melewati proses auto-generate...');
+  process.exit(0);
+}
+
 import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
