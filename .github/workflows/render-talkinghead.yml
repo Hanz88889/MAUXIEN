@@ -95,10 +95,20 @@ jobs:
           fi
 
       - name: Transcribe
-        run: node scripts/transcribe.mjs "$VIDEO"
+        run: |
+          if [ -f "public/data/$NAME.timeline.json" ]; then
+            echo "Timeline JSON kustom ditemukan (public/data/$NAME.timeline.json), melewati proses Transcribe..."
+          else
+            node scripts/transcribe.mjs "$VIDEO"
+          fi
 
       - name: Build timeline
-        run: node scripts/make-timeline.mjs "$VIDEO"
+        run: |
+          if [ -f "public/data/$NAME.timeline.json" ]; then
+            echo "Menggunakan Timeline JSON kustom yang sudah ada..."
+          else
+            node scripts/make-timeline.mjs "$VIDEO"
+          fi
 
       - name: Check stills
         if: ${{ inputs.stills }}
