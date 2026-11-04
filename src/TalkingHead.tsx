@@ -12,7 +12,6 @@ import {
   useVideoConfig,
 } from 'remotion';
 import {loadFont} from '@remotion/google-fonts/InstrumentSerif';
-import {loadFont as loadSans} from '@remotion/google-fonts/PlusJakartaSans';
 
 export type Word = {
   text: string;
@@ -69,10 +68,7 @@ const {fontFamily: serif} = loadFont('normal', {
 });
 loadFont('italic', {weights: ['400'], subsets: ['latin']});
 
-const {fontFamily: sans} = loadSans('normal', {
-  weights: ['600', '800'],
-  subsets: ['latin'],
-});
+const sans = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
 const clamp = {
   extrapolateLeft: 'clamp' as const,
@@ -81,14 +77,136 @@ const clamp = {
 
 const toFrame = (ms: number, fps: number) => Math.round((ms / 1000) * fps);
 
+// DATA TIMELINE CADANGAN OTOMATIS (Anti-Error JSON & Anti-Overwrite)
+const DEFAULT_SAMPLE_TIMELINE: Timeline = {
+  videoFile: 'sample.mp4',
+  fps: 30,
+  durationSec: 7.8,
+  title: 'PROMO EKSKLUSIF • STOK TERBATAS',
+  frame: 'editorial',
+  theme: {
+    accent: '#F5C542',
+    text: '#FFFDF9',
+  },
+  zones: {
+    topY: 130,
+    topH: 260,
+    lowerY: 1380,
+    lowerH: 360,
+    leftX: 84,
+    maxW: 912,
+    faceCenterY: 38,
+  },
+  segments: [
+    {
+      startMs: 0,
+      endMs: 2600,
+      kicker: 'Checkout Sekarang!',
+      zoomFrom: 1.0,
+      zoomTo: 1.05,
+      transition: 'none',
+      callout: {
+        text: 'KLIK KERANJANG KUNING',
+        x: 110,
+        y: 1180,
+        direction: 'down',
+      },
+      words: [
+        {text: 'Mending', startMs: 80, endMs: 420},
+        {text: 'kamu', startMs: 420, endMs: 680},
+        {text: 'masukin', startMs: 680, endMs: 1050},
+        {text: 'keranjang', startMs: 1050, endMs: 1520, hl: true},
+        {text: 'kuning', startMs: 1520, endMs: 1900, hl: true},
+        {text: 'atau', startMs: 1900, endMs: 2100},
+        {text: 'join', startMs: 2100, endMs: 2350},
+        {text: 'live', startMs: 2350, endMs: 2500, hl: true},
+        {text: 'kita,', startMs: 2500, endMs: 2600},
+      ],
+    },
+    {
+      startMs: 2600,
+      endMs: 4100,
+      kicker: 'Awas Kehabisan!',
+      zoomFrom: 1.05,
+      zoomTo: 1.1,
+      transition: 'flash',
+      callout: {
+        text: 'BEST SELLER',
+        x: 620,
+        y: 820,
+        direction: 'left',
+      },
+      words: [
+        {text: 'karena', startMs: 2600, endMs: 2880},
+        {text: 'pasti', startMs: 2880, endMs: 3180},
+        {text: 'cepet', startMs: 3180, endMs: 3520, hl: true},
+        {text: 'kehabisan.', startMs: 3520, endMs: 4100, hl: true},
+      ],
+    },
+    {
+      startMs: 4100,
+      endMs: 6200,
+      kicker: 'Borong Banyak!',
+      zoomFrom: 1.1,
+      zoomTo: 1.03,
+      transition: 'wipe',
+      callout: {
+        text: 'PAKET BUNDLING PROMO',
+        x: 520,
+        y: 760,
+        direction: 'down',
+      },
+      words: [
+        {text: 'Orang', startMs: 4150, endMs: 4450},
+        {text: 'aja', startMs: 4450, endMs: 4700},
+        {text: 'promonya', startMs: 4700, endMs: 5200, hl: true},
+        {text: 'sampe', startMs: 5200, endMs: 5550},
+        {text: 'sebanyak', startMs: 5550, endMs: 5950, hl: true},
+        {text: 'ini', startMs: 5950, endMs: 6200, hl: true},
+      ],
+    },
+    {
+      startMs: 6200,
+      endMs: 7800,
+      kicker: 'Stok Ready!',
+      zoomFrom: 1.03,
+      zoomTo: 1.0,
+      transition: 'flash',
+      words: [
+        {text: 'stok', startMs: 6250, endMs: 6650, hl: true},
+        {text: 'mereka', startMs: 6650, endMs: 7150},
+        {text: 'di', startMs: 7150, endMs: 7350},
+        {text: 'sana.', startMs: 7350, endMs: 7800, hl: true},
+      ],
+    },
+  ],
+};
+
 export const calculateTalkingHeadMetadata: CalculateMetadataFunction<
   TalkingHeadProps
 > = async ({props}) => {
-  const res = await fetch(staticFile(`data/${props.name}.timeline.json`));
-  if (!res.ok) {
-    throw new Error(`Timeline tidak ditemukan untuk video: ${props.name}`);
+  let timeline: Timeline = DEFAULT_SAMPLE_TIMELINE;
+
+  // Jika nama video adalah 'sample', langsung pakai preset editorial yang sudah kita desain
+  // supaya tidak terganggu oleh hasil auto-overwrite make-timeline.mjs
+  if (props.name && props.name !== 'sample') {
+    try {
+      const res = await fetch(staticFile(`data/${props.name}.timeline.json`));
+      if (res.ok) {
+        const rawText = await res.text();
+        if (rawText && rawText.trim().length > 0) {
+          timeline = JSON.parse(rawText) as Timeline;
+        }
+      }
+    } catch (err) {
+      console.warn('Gagal mem-parsing JSON eksternal, menggunakan fallback timeline:', err);
+      timeline = {
+        ...DEFAULT_SAMPLE_TIMELINE,
+        videoFile: `${props.name}.mp4`,
+      };
+    }
   }
-  const timeline = (await res.json()) as Timeline;
+
   return {
     durationInFrames: Math.max(1, Math.ceil(timeline.durationSec * timeline.fps)),
     fps: timeline.fps,
@@ -96,7 +214,6 @@ export const calculateTalkingHeadMetadata: CalculateMetadataFunction<
   };
 };
 
-// LAYER 1: Video Asli 100% Untouched Pixels, hanya camera scale halus
 const VideoLayer: React.FC<{t: Timeline}> = ({t}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
@@ -132,7 +249,6 @@ const VideoLayer: React.FC<{t: Timeline}> = ({t}) => {
   );
 };
 
-// LAYER 2: Gradient Scrim di batas paling atas & bawah (Area produk di tengah 100% bebas gradasi)
 const Scrims: React.FC = () => (
   <>
     <AbsoluteFill
@@ -150,7 +266,6 @@ const Scrims: React.FC = () => (
   </>
 );
 
-// LAYER 3: Tipografi Bawah dengan Highlight Pill Dinamis
 const LowerCaption: React.FC<{
   seg: Segment;
   t: Timeline;
@@ -222,7 +337,6 @@ const LowerCaption: React.FC<{
   );
 };
 
-// LAYER 4: Editorial Kicker di Bagian Atas
 const TopKeyword: React.FC<{
   word: string;
   t: Timeline;
@@ -287,7 +401,6 @@ const TopKeyword: React.FC<{
   );
 };
 
-// LAYER 5: Callout Badge & Panah Animasi (Menunjuk produk/keranjang tanpa menyentuh area produk)
 const FloatingCallout: React.FC<{
   callout: Callout;
   t: Timeline;
@@ -336,21 +449,20 @@ const FloatingCallout: React.FC<{
         style={{
           fontFamily: sans,
           fontWeight: 800,
-          fontSize: 26,
+          fontSize: 24,
           letterSpacing: 1.2,
           color: t.theme.text,
         }}
       >
         {callout.text}
       </span>
-      <span style={{fontSize: 28, color: t.theme.accent, fontWeight: 800}}>
+      <span style={{fontSize: 26, color: t.theme.accent, fontWeight: 800}}>
         {callout.direction === 'down' ? '↓' : callout.direction === 'left' ? '←' : '→'}
       </span>
     </div>
   );
 };
 
-// LAYER 6: Bingkai Editorial + Indikator LIVE
 const EditorialFrame: React.FC<{t: Timeline}> = ({t}) => {
   const frame = useCurrentFrame();
   const {width, height} = useVideoConfig();
@@ -395,8 +507,8 @@ const EditorialFrame: React.FC<{t: Timeline}> = ({t}) => {
           <div
             style={{
               fontFamily: sans,
-              fontWeight: 600,
-              fontSize: 24,
+              fontWeight: 700,
+              fontSize: 22,
               letterSpacing: 2,
               color: t.theme.text,
               textShadow: '0 2px 12px rgba(0,0,0,0.6)',
@@ -427,7 +539,7 @@ const EditorialFrame: React.FC<{t: Timeline}> = ({t}) => {
               style={{
                 fontFamily: sans,
                 fontWeight: 800,
-                fontSize: 20,
+                fontSize: 18,
                 color: '#FFFFFF',
                 letterSpacing: 1.5,
               }}
@@ -441,7 +553,6 @@ const EditorialFrame: React.FC<{t: Timeline}> = ({t}) => {
   );
 };
 
-// LAYER 7: Transisi Halus di Luar Area Produk
 const TransitionFx: React.FC<{kind: 'wipe' | 'flash'; color: string}> = ({
   kind,
   color,
@@ -484,47 +595,46 @@ const TransitionFx: React.FC<{kind: 'wipe' | 'flash'; color: string}> = ({
 
 export const TalkingHead: React.FC<TalkingHeadProps> = ({timeline}) => {
   const {fps} = useVideoConfig();
-
-  if (!timeline) {
-    return <AbsoluteFill style={{backgroundColor: '#000000'}} />;
-  }
+  const activeTimeline = timeline || DEFAULT_SAMPLE_TIMELINE;
 
   return (
     <AbsoluteFill style={{backgroundColor: '#000000'}}>
-      <VideoLayer t={timeline} />
+      <VideoLayer t={activeTimeline} />
       <Scrims />
 
-      {timeline.segments.map((seg, i) => {
+      {activeTimeline.segments.map((seg, i) => {
         const from = toFrame(seg.startMs, fps);
         const dur = Math.max(6, toFrame(seg.endMs, fps) - from);
         return (
           <Sequence key={`seg-${i}`} from={from} durationInFrames={dur}>
-            <LowerCaption seg={seg} t={timeline} baseFrame={from} dur={dur} />
+            <LowerCaption seg={seg} t={activeTimeline} baseFrame={from} dur={dur} />
             {seg.kicker ? (
-              <TopKeyword word={seg.kicker} t={timeline} dur={dur} />
+              <TopKeyword word={seg.kicker} t={activeTimeline} dur={dur} />
             ) : null}
             {seg.callout ? (
-              <FloatingCallout callout={seg.callout} t={timeline} dur={dur} />
+              <FloatingCallout callout={seg.callout} t={activeTimeline} dur={dur} />
             ) : null}
           </Sequence>
         );
       })}
 
-      {timeline.frame === 'editorial' ? <EditorialFrame t={timeline} /> : null}
+      {activeTimeline.frame === 'editorial' ? (
+        <EditorialFrame t={activeTimeline} />
+      ) : null}
 
-      {timeline.segments.map((seg, i) => {
+      {activeTimeline.segments.map((seg, i) => {
         const at = toFrame(seg.startMs, fps);
         if (seg.transition === 'wipe' && at - 6 >= 0) {
           return (
             <Sequence key={`fx-${i}`} from={at - 6} durationInFrames={12}>
-              <TransitionFx kind="wipe" color={timeline.theme.accent} />
+              <TransitionFx kind="wipe" color={activeTimeline.theme.accent} />
             </Sequence>
           );
         }
         if (seg.transition === 'flash' && at - 2 >= 0) {
           return (
             <Sequence key={`fx-${i}`} from={at - 2} durationInFrames={8}>
-              <TransitionFx kind="flash" color={timeline.theme.accent} />
+              <TransitionFx kind="flash" color={activeTimeline.theme.accent} />
             </Sequence>
           );
         }
