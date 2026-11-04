@@ -1,0 +1,97 @@
+{
+  "videoFile": "sample.mp4",
+  "fps": 30,
+  "durationSec": 7.8,
+  "title": "PROMO EKSKLUSIF • STOK TERBATAS",
+  "frame": "editorial",
+  "theme": {
+    "accent": "#F5C542",
+    "text": "#FFFDF9"
+  },
+  "zones": {
+    "topY": 130,
+    "topH": 260,
+    "lowerY": 1380,
+    "lowerH": 360,
+    "leftX": 84,
+    "maxW": 912,
+    "faceCenterY": 38
+  },
+  "segments": [
+    {
+      "startMs": 0,
+      "endMs": 2600,
+      "kicker": "Checkout Sekarang!",
+      "zoomFrom": 1.0,
+      "zoomTo": 1.05,
+      "transition": "none",
+      "callout": {
+        "text": "KLIK KERANJANG KUNING",
+        "x": 110,
+        "y": 1180,
+        "direction": "down"
+      },
+      "words": [
+        { "text": "Mending", "startMs": 80, "endMs": 420 },
+        { "text": "kamu", "startMs": 420, "endMs": 680 },
+        { "text": "masukin", "startMs": 680, "endMs": 1050 },
+        { "text": "keranjang", "startMs": 1050, "endMs": 1520, "hl": true },
+        { "text": "kuning", "startMs": 1520, "endMs": 1900, "hl": true },
+        { "text": "atau", "startMs": 1900, "endMs": 2100 },
+        { "text": "join", "startMs": 2100, "endMs": 2350 },
+        { "text": "live", "startMs": 2350, "endMs": 2500, "hl": true },
+        { "text": "kita,", "startMs": 2500, "endMs": 2600 }
+      ]
+    },
+    {
+      "startMs": 2600,
+      "endMs": 4100,
+      "kicker": "Awas Kehabisan!",
+      "zoomFrom": 1.05,
+      "zoomTo": 1.10,
+      "transition": "flash",
+      "callout": {
+        "text": "BEST SELLER",
+        "x": 620,
+        "y": 820,
+        "direction": "left"
+      },
+      "words": [
+        { "text": "karena", "startMs": 2600, "endMs": 2880 },
+        { "text": "pasti", "startMs": 2880, "endMs": 3180 },
+        { "text": "cepet", "startMs": 3180, "endMs": 3520, "hl": true },
+        { "text": "kehabisan.", "startMs": 3520, "endMs": 4100, "hl": true }
+      ]
+    },
+    {
+      "startMs": 4100,
+      "endMs": 6200,
+      "kicker": "Borong Banyak!",
+      "zoomFrom": 1.10,
+      "zoomTo": 1.03,
+      "transition": "wipe",
+      "callout": {
+        "text": "PAKET BUNDLING PROMO",
+        "x": 580,
+        "y": 760,
+        "direction": "down"
+      },
+      "words": [
+        { "text": "Orang", "startMs": 4150, "endMs": 4450 },
+        { "text": "aja", "startMs": 4450, "endMs": 4700 },
+        { "text": "promonya", "startMs": 4700, "endMs": 5200, "hl": true },
+        { "text": "sampe", "startMs": 5200, "endMs": 5550 },
+        { "text": "sebanyak", "startMs": 5550, "endMs": 5950, "hl": true },
+        { "text": "ini", "startMs": 5950, "endMs": 6200, "hl": true }
+      ]
+    },
+    {
+      "startMs": 6200,
+      "endMs": 7800,
+      "kicker": "Stok Ready!",
+      "zoomFrom": 1.03,
+      "zoomTo": 1.0,
+      "transition": "flash",
+      "words": [
+        { "text": "stok", "startMs": 6250, "endMs": 6650, "hl": true },
+        { "text": "mereka", "startMs": 6650, "endMs": 7150 },
