@@ -12,12 +12,20 @@ import {
   useVideoConfig,
 } from 'remotion';
 import {loadFont} from '@remotion/google-fonts/InstrumentSerif';
+import {loadFont as loadSans} from '@remotion/google-fonts/PlusJakartaSans';
 
 export type Word = {
   text: string;
   startMs: number;
   endMs: number;
   hl?: boolean;
+};
+
+export type Callout = {
+  text: string;
+  x: number;
+  y: number;
+  direction?: 'down' | 'left' | 'right';
 };
 
 export type Segment = {
@@ -28,6 +36,7 @@ export type Segment = {
   zoomFrom: number;
   zoomTo: number;
   transition: 'none' | 'cut' | 'wipe' | 'flash';
+  callout?: Callout;
 };
 
 export type Timeline = {
@@ -60,6 +69,11 @@ const {fontFamily: serif} = loadFont('normal', {
 });
 loadFont('italic', {weights: ['400'], subsets: ['latin']});
 
+const {fontFamily: sans} = loadSans('normal', {
+  weights: ['600', '800'],
+  subsets: ['latin'],
+});
+
 const clamp = {
   extrapolateLeft: 'clamp' as const,
   extrapolateRight: 'clamp' as const,
@@ -82,6 +96,7 @@ export const calculateTalkingHeadMetadata: CalculateMetadataFunction<
   };
 };
 
+// LAYER 1: Video Asli 100% Untouched Pixels, hanya camera scale halus
 const VideoLayer: React.FC<{t: Timeline}> = ({t}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
@@ -117,23 +132,25 @@ const VideoLayer: React.FC<{t: Timeline}> = ({t}) => {
   );
 };
 
+// LAYER 2: Gradient Scrim di batas paling atas & bawah (Area produk di tengah 100% bebas gradasi)
 const Scrims: React.FC = () => (
   <>
     <AbsoluteFill
       style={{
         background:
-          'linear-gradient(to top, rgba(8,10,18,0.78) 0%, rgba(8,10,18,0.35) 28%, rgba(8,10,18,0) 48%)',
+          'linear-gradient(to top, rgba(8,10,18,0.88) 0%, rgba(8,10,18,0.45) 22%, rgba(8,10,18,0) 36%)',
       }}
     />
     <AbsoluteFill
       style={{
         background:
-          'linear-gradient(to bottom, rgba(8,10,18,0.55) 0%, rgba(8,10,18,0) 24%)',
+          'linear-gradient(to bottom, rgba(8,10,18,0.65) 0%, rgba(8,10,18,0) 20%)',
       }}
     />
   </>
 );
 
+// LAYER 3: Tipografi Bawah dengan Highlight Pill Dinamis
 const LowerCaption: React.FC<{
   seg: Segment;
   t: Timeline;
@@ -143,7 +160,7 @@ const LowerCaption: React.FC<{
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const chars = seg.words.reduce((n, w) => n + w.text.length + 1, 0);
-  const size = chars > 44 ? 88 : 100;
+  const size = chars > 44 ? 82 : 94;
   const fadeOut = interpolate(frame, [dur - 6, dur], [1, 0], clamp);
 
   return (
@@ -163,13 +180,14 @@ const LowerCaption: React.FC<{
         style={{
           display: 'flex',
           flexWrap: 'wrap',
-          columnGap: size * 0.24,
-          rowGap: size * 0.02,
+          alignItems: 'baseline',
+          columnGap: size * 0.22,
+          rowGap: size * 0.12,
           fontFamily: serif,
           fontSize: size,
-          lineHeight: 1.02,
+          lineHeight: 1.05,
           color: t.theme.text,
-          textShadow: '0 6px 28px rgba(0,0,0,0.5)',
+          textShadow: '0 6px 28px rgba(0,0,0,0.65)',
         }}
       >
         {seg.words.map((w, i) => {
@@ -177,7 +195,7 @@ const LowerCaption: React.FC<{
           const p = spring({
             frame: frame - local,
             fps,
-            config: {damping: 18, stiffness: 170, mass: 0.7},
+            config: {damping: 16, stiffness: 190, mass: 0.65},
           });
           return (
             <span
@@ -185,10 +203,14 @@ const LowerCaption: React.FC<{
               style={{
                 display: 'inline-block',
                 opacity: p,
-                transform: `translateY(${(1 - p) * 26}px)`,
+                transform: `translateY(${(1 - p) * 28}px) scale(${0.92 + 0.08 * p})`,
                 fontStyle: w.hl ? 'italic' : 'normal',
-                color: w.hl ? t.theme.accent : t.theme.text,
-                fontSize: w.hl ? size * 1.1 : size,
+                color: w.hl ? '#0B0D13' : t.theme.text,
+                backgroundColor: w.hl ? t.theme.accent : 'transparent',
+                padding: w.hl ? '2px 18px 8px 18px' : '0px',
+                borderRadius: w.hl ? 14 : 0,
+                fontSize: w.hl ? size * 1.06 : size,
+                boxShadow: w.hl ? '0 8px 24px rgba(245, 197, 66, 0.35)' : 'none',
               }}
             >
               {w.text}
@@ -200,6 +222,7 @@ const LowerCaption: React.FC<{
   );
 };
 
+// LAYER 4: Editorial Kicker di Bagian Atas
 const TopKeyword: React.FC<{
   word: string;
   t: Timeline;
@@ -208,13 +231,13 @@ const TopKeyword: React.FC<{
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const size = Math.max(
-    96,
-    Math.min(200, Math.floor(880 / (Math.max(word.length, 1) * 0.46))),
+    86,
+    Math.min(150, Math.floor(880 / (Math.max(word.length, 1) * 0.5))),
   );
   const inP = spring({
     frame: frame - 2,
     fps,
-    config: {damping: 20, stiffness: 150, mass: 0.8},
+    config: {damping: 18, stiffness: 160, mass: 0.8},
   });
   const outP = interpolate(frame, [dur - 8, dur], [0, 1], {
     ...clamp,
@@ -228,14 +251,14 @@ const TopKeyword: React.FC<{
         position: 'absolute',
         left: t.zones.leftX,
         top: t.zones.topY,
-        width: t.zones.maxW + 100,
+        width: t.zones.maxW,
         height: t.zones.topH,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'flex-start',
       }}
     >
-      <div style={{overflow: 'hidden', height: size * 1.2}}>
+      <div style={{overflow: 'hidden', height: size * 1.25}}>
         <div
           style={{
             fontFamily: serif,
@@ -243,7 +266,7 @@ const TopKeyword: React.FC<{
             fontSize: size,
             lineHeight: 1.1,
             color: t.theme.accent,
-            textShadow: '0 6px 28px rgba(0,0,0,0.45)',
+            textShadow: '0 6px 28px rgba(0,0,0,0.55)',
             transform: `translateY(${shift}%)`,
           }}
         >
@@ -252,9 +275,9 @@ const TopKeyword: React.FC<{
       </div>
       <div
         style={{
-          marginTop: 10,
+          marginTop: 8,
           height: 5,
-          width: 168,
+          width: 180,
           backgroundColor: t.theme.accent,
           transformOrigin: 'left center',
           transform: `scaleX(${inP * (1 - outP)})`,
@@ -264,6 +287,70 @@ const TopKeyword: React.FC<{
   );
 };
 
+// LAYER 5: Callout Badge & Panah Animasi (Menunjuk produk/keranjang tanpa menyentuh area produk)
+const FloatingCallout: React.FC<{
+  callout: Callout;
+  t: Timeline;
+  dur: number;
+}> = ({callout, t, dur}) => {
+  const frame = useCurrentFrame();
+  const {fps} = useVideoConfig();
+
+  const enter = spring({
+    frame: frame - 6,
+    fps,
+    config: {damping: 14, stiffness: 180, mass: 0.6},
+  });
+  const exit = interpolate(frame, [dur - 7, dur], [1, 0], clamp);
+  const bounce = Math.sin(frame / 4) * 6;
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        left: callout.x,
+        top: callout.y + bounce,
+        opacity: enter * exit,
+        transform: `scale(${enter})`,
+        transformOrigin: 'left center',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        backgroundColor: 'rgba(12, 14, 22, 0.88)',
+        border: `2px solid ${t.theme.accent}`,
+        borderRadius: 999,
+        padding: '12px 24px',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.45)',
+      }}
+    >
+      <span
+        style={{
+          width: 12,
+          height: 12,
+          borderRadius: '50%',
+          backgroundColor: t.theme.accent,
+          display: 'inline-block',
+        }}
+      />
+      <span
+        style={{
+          fontFamily: sans,
+          fontWeight: 800,
+          fontSize: 26,
+          letterSpacing: 1.2,
+          color: t.theme.text,
+        }}
+      >
+        {callout.text}
+      </span>
+      <span style={{fontSize: 28, color: t.theme.accent, fontWeight: 800}}>
+        {callout.direction === 'down' ? '↓' : callout.direction === 'left' ? '←' : '→'}
+      </span>
+    </div>
+  );
+};
+
+// LAYER 6: Bingkai Editorial + Indikator LIVE
 const EditorialFrame: React.FC<{t: Timeline}> = ({t}) => {
   const frame = useCurrentFrame();
   const {width, height} = useVideoConfig();
@@ -271,7 +358,8 @@ const EditorialFrame: React.FC<{t: Timeline}> = ({t}) => {
     ...clamp,
     easing: Easing.out(Easing.cubic),
   });
-  const labelIn = interpolate(frame, [20, 40], [0, 1], clamp);
+  const labelIn = interpolate(frame, [15, 35], [0, 1], clamp);
+  const pulse = 0.5 + 0.5 * Math.sin(frame / 5);
   const m = 36;
 
   return (
@@ -284,7 +372,7 @@ const EditorialFrame: React.FC<{t: Timeline}> = ({t}) => {
           height={height - 2 * m}
           fill="none"
           stroke={t.theme.text}
-          strokeOpacity={0.5}
+          strokeOpacity={0.45}
           strokeWidth={2}
           pathLength={1}
           strokeDasharray={1}
@@ -297,21 +385,63 @@ const EditorialFrame: React.FC<{t: Timeline}> = ({t}) => {
             position: 'absolute',
             left: m + 28,
             top: m + 22,
-            fontFamily: serif,
-            fontStyle: 'italic',
-            fontSize: 34,
-            color: t.theme.text,
-            opacity: labelIn * 0.9,
-            textShadow: '0 2px 12px rgba(0,0,0,0.5)',
+            right: m + 28,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            opacity: labelIn,
           }}
         >
-          {t.title}
+          <div
+            style={{
+              fontFamily: sans,
+              fontWeight: 600,
+              fontSize: 24,
+              letterSpacing: 2,
+              color: t.theme.text,
+              textShadow: '0 2px 12px rgba(0,0,0,0.6)',
+            }}
+          >
+            {t.title}
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              backgroundColor: 'rgba(220, 38, 38, 0.9)',
+              padding: '6px 16px',
+              borderRadius: 999,
+            }}
+          >
+            <div
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: '50%',
+                backgroundColor: '#FFFFFF',
+                opacity: pulse,
+              }}
+            />
+            <span
+              style={{
+                fontFamily: sans,
+                fontWeight: 800,
+                fontSize: 20,
+                color: '#FFFFFF',
+                letterSpacing: 1.5,
+              }}
+            >
+              LIVE PROMO
+            </span>
+          </div>
         </div>
       ) : null}
     </AbsoluteFill>
   );
 };
 
+// LAYER 7: Transisi Halus di Luar Area Produk
 const TransitionFx: React.FC<{kind: 'wipe' | 'flash'; color: string}> = ({
   kind,
   color,
@@ -319,24 +449,35 @@ const TransitionFx: React.FC<{kind: 'wipe' | 'flash'; color: string}> = ({
   const frame = useCurrentFrame();
 
   if (kind === 'flash') {
-    const o = interpolate(frame, [0, 2, 9], [0, 0.85, 0], clamp);
-    return <AbsoluteFill style={{backgroundColor: '#FFFFFF', opacity: o}} />;
+    const o = interpolate(frame, [0, 2, 8], [0, 0.35, 0], clamp);
+    return (
+      <AbsoluteFill
+        style={{
+          background: `radial-gradient(circle, rgba(255,255,255,0) 35%, ${color} 100%)`,
+          opacity: o,
+        }}
+      />
+    );
   }
 
   const x =
-    frame < 8
-      ? interpolate(frame, [0, 8], [-100, 0], {
+    frame < 6
+      ? interpolate(frame, [0, 6], [-100, 0], {
           ...clamp,
           easing: Easing.in(Easing.cubic),
         })
-      : interpolate(frame, [8, 15], [0, 100], {
+      : interpolate(frame, [6, 12], [0, 100], {
           ...clamp,
           easing: Easing.out(Easing.cubic),
         });
 
   return (
     <AbsoluteFill
-      style={{backgroundColor: color, transform: `translateX(${x}%)`}}
+      style={{
+        backgroundColor: color,
+        opacity: 0.18,
+        transform: `translateX(${x}%)`,
+      }}
     />
   );
 };
@@ -362,6 +503,9 @@ export const TalkingHead: React.FC<TalkingHeadProps> = ({timeline}) => {
             {seg.kicker ? (
               <TopKeyword word={seg.kicker} t={timeline} dur={dur} />
             ) : null}
+            {seg.callout ? (
+              <FloatingCallout callout={seg.callout} t={timeline} dur={dur} />
+            ) : null}
           </Sequence>
         );
       })}
@@ -370,17 +514,17 @@ export const TalkingHead: React.FC<TalkingHeadProps> = ({timeline}) => {
 
       {timeline.segments.map((seg, i) => {
         const at = toFrame(seg.startMs, fps);
-        if (seg.transition === 'wipe' && at - 8 >= 0) {
+        if (seg.transition === 'wipe' && at - 6 >= 0) {
           return (
-            <Sequence key={`fx-${i}`} from={at - 8} durationInFrames={16}>
+            <Sequence key={`fx-${i}`} from={at - 6} durationInFrames={12}>
               <TransitionFx kind="wipe" color={timeline.theme.accent} />
             </Sequence>
           );
         }
         if (seg.transition === 'flash' && at - 2 >= 0) {
           return (
-            <Sequence key={`fx-${i}`} from={at - 2} durationInFrames={10}>
-              <TransitionFx kind="flash" color="#FFFFFF" />
+            <Sequence key={`fx-${i}`} from={at - 2} durationInFrames={8}>
+              <TransitionFx kind="flash" color={timeline.theme.accent} />
             </Sequence>
           );
         }
